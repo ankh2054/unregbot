@@ -21,7 +21,6 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgres://unreguser:Nightshad
 const TELEGRAM_TOKEN = '7354851679:AAF_itKyLQeIB8QWpxrQR6UUDGcU_MjGIoY';
 
 
-// CREA
 
 // Initialize PostgreSQL
 const dbClient = new Client({
@@ -195,6 +194,8 @@ fastify.post('/login', async (request, reply) => {
     reply.status(500).send({ success: false, message: 'Login failed. An error occurred.', error: error.message });
   }
 });
+
+
 
 
 // // Start the server
