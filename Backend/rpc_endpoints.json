@@ -1,0 +1,22 @@
+{
+    "mainnet": {
+      "endpoints": [
+        "https://wax.eosrio.io",
+        "https://wax.cryptolions.io",
+        "https://api-wax-mainnet.wecan.dev",
+        "https://api-wax.eosauthority.com",
+        "https://wax-public1.neftyblocks.com"
+      ],
+      "chainId": "1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4"
+    },
+    "testnet": {
+      "endpoints": [
+        "https://api.waxtest.alohaeos.com",
+        "https://testnet.wax.blacklusion.io",
+        "https://wax-testnet.cryptolions.io",
+        "http://test.wax.eosusa.io",
+        "http://testnet.waxsweden.org"
+      ],
+      "chainId": "f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12"
+    }
+  }
