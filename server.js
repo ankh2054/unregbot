@@ -10,7 +10,8 @@ const rpcEndpoints = JSON.parse(fs.readFileSync('rpc_endpoints.json', 'utf8'));
 
 // Configuration
 const mainnetNodeName = process.env.MAINNET_NODE_NAME;
-
+// Global object to track unregistration status
+const producerUnregistered = {};
 
 // Pushover loading
 
@@ -83,7 +84,6 @@ async function checkMissedBlocks(producer, url) {
 }
 
 
-// Monitoring function
 async function monitorProducers() {
   try {
     const unregKey = process.env.UNREG_KEY; 
@@ -92,49 +92,51 @@ async function monitorProducers() {
     const pushoverEnabled = process.env.PUSHOVER !== 'false'; // Check if Pushover is enabled
     
     const currentDate = new Date();
-    // We only ever want to check 1 minutes worth, but we need to account for missinblocks API working  on LIB blocks, so it will always be a bit behind
     const endDate = new Date(currentDate.getTime() - 180000); //3 minutes ago
     const startDate = new Date(currentDate.getTime() - 240000);  //4 minutes ago
 
-    // Format times for logging
-    const startTime = startDate.toTimeString().split(' ')[0];
-    const endTime = endDate.toTimeString().split(' ')[0];
-
-
-    // Define URLs for checking missed blocks on both networks
     const urls = {
       mainnet: `https://missm.sentnl.io/missing-blocks?ownerName=${mainnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
       testnet: `https://misst.sentnl.io/missing-blocks?ownerName=${testnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
     };
-    // Iterate over each network type and its corresponding URL
+
     for (const [networkType, url] of Object.entries(urls)) {
       const nodeName = networkType === 'mainnet' ? mainnetNodeName : testnetNodeName;
       const missedBlocks = await checkMissedBlocks(nodeName, url);
-      const threshold = 12 * missed_rounds; // Assuming a fixed threshold value, adjust as necessary
+      const threshold = 12 * missed_rounds;
 
-      // Check if missed blocks exceed the threshold and take action
       if (missedBlocks >= threshold) {
-        await unregisterProducer(unregKey, nodeName, networkType);
-        if (pushoverEnabled) {
-          const msg = {
-            message: `Your producer ${nodeName} on WAX ${networkType} has missed ${missedBlocks} blocks and has been unregistered.`,
-            title: "Producer Unregistered",
-            sound: 'magic',
-            priority: 1
-          };
-          push.send(msg, function (err, result) {
-            if (err) {
-              console.log('Error sending Pushover message:', err);
-            } else {
-              console.log('Pushover message sent:', result);
+        if (!producerUnregistered[nodeName]) {
+          try {
+            await unregisterProducer(unregKey, nodeName, networkType);
+            // Set to true only if unregistration is successful
+            producerUnregistered[nodeName] = true;
+            if (pushoverEnabled) {
+              const msg = {
+                message: `Your producer ${nodeName} on WAX ${networkType} has missed ${missedBlocks} blocks and has been unregistered.`,
+                title: "Producer Unregistered",
+                sound: 'magic',
+                priority: 1
+              };
+              push.send(msg, function (err, result) {
+                if (err) {
+                  console.log('Error sending Pushover message:', err);
+                } else {
+                  console.log('Pushover message sent:', result);
+                }
+              });
             }
-          });
+            console.log(`Your producer ${nodeName} on WAX ${networkType} has missed ${missedBlocks} blocks and has been unregistered.`)
+          } catch (error) {
+            console.log(`Failed to unregister producer ${nodeName} on ${networkType}:`, error);
+            // Do not update the unregistered status if the unregistration fails
+          }
+        } else {
+          console.log(`Producer ${nodeName} on ${networkType} is already unregistered.`);
         }
-        console.log(`Your producer ${nodeName} on WAX ${networkType} has missed ${missedBlocks} blocks and has been unregistered.`)
-      }
-      else {
-        console.log(`${nodeName} on ${networkType} has missed ${missedBlocks} blocks between ${startTime} - ${endTime}`)
-
+      } else {
+        producerUnregistered[nodeName] = false;
+        console.log(`${nodeName} on ${networkType} has missed ${missedBlocks} blocks between ${startDate.toTimeString().split(' ')[0]} - ${endDate.toTimeString().split(' ')[0]}`)
       }
     }
   } catch (error) {
@@ -146,7 +148,7 @@ async function monitorProducers() {
 
 function main() {
   // Schedule the monitoring function to run every 10 seconds
-  schedule.scheduleJob('*/10 * * * * *', monitorProducers);
+  schedule.scheduleJob('*/30 * * * * *', monitorProducers);
   console.log(`Monitoring has started for ${mainnetNodeName}, checking mainnet and testnet producers every minute.`);
 
 }
@@ -155,4 +157,4 @@ main();
 
 
 
- //await unregisterProducer('5KCSJsUAyPwqVruBK6vrAapHhr9Uxu6zFQczsDbQCUYZeYZVoYV', 'sentnlagents', 'mainnet');
+ //await unregisterProducer('5KCSJsUAyPwqVruBK6vrAapHhr9Uxu6zFQczsDbQCUYZeYZVoYV', 'sentnltesting', 'testnet');
