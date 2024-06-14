@@ -111,6 +111,7 @@ async function monitorProducers() {
             await unregisterProducer(unregKey, nodeName, networkType);
             // Set to true only if unregistration is successful
             producerUnregistered[nodeName] = true;
+            console.log(`Is Producer unregistered ${producerUnregistered[nodeName]}`)
             if (pushoverEnabled) {
               const msg = {
                 message: `Your producer ${nodeName} on WAX ${networkType} has missed ${missedBlocks} blocks and has been unregistered.`,
