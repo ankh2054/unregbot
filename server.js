@@ -91,8 +91,10 @@ async function monitorProducers() {
     const missed_rounds = process.env.MISSED_ROUNDS || 1;
     const pushoverEnabled = process.env.PUSHOVER !== 'false'; // Check if Pushover is enabled
     
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - 60000);  // 1 minute ago
+    const currentDate = new Date();
+    // We only ever want to check 1 minutes worth, but we need to account for missinblocks API working  on LIB blocks, so it will always be a bit behind
+    const endDate = new Date(currentDate.getTime() - 120000); //2 minutes ago
+    const startDate = new Date(currentDate.getTime() - 180000);  //3 minutes ago
 
     // Format times for logging
     const startTime = startDate.toTimeString().split(' ')[0];

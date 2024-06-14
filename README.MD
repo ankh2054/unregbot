@@ -51,7 +51,7 @@ docker run --name unreg  \
 -e "PUSHOVER=true" \
 -e "PUSHOVER_USER=xxxxxxxxxxxxxx" \
 -e "PUSHOVER_TOKEN=xxxxxxxxxxxxx" \
-unreg:prod
+unreg:latest
 
 ## ENV Variables
 
