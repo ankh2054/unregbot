@@ -145,9 +145,8 @@ async function monitorProducers() {
 // // Schedule the monitoring function to run every minute
 
 function main() {
-  // Schedule the monitoring function to run every minute
-  schedule.scheduleJob('* * * * *', monitorProducers);
-
+  // Schedule the monitoring function to run every 10 seconds
+  schedule.scheduleJob('*/10 * * * * *', monitorProducers);
   console.log(`Monitoring has started for ${mainnetNodeName}, checking mainnet and testnet producers every minute.`);
 
 }
