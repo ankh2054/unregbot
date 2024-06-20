@@ -44,7 +44,7 @@ docker build -f Dockerfile -t unreg .
 
 ```
 docker run --name unreg  \
--d -e "UNREG_KEY=5K96gLHiz3QLB6Cw3Bn8DkPaqLXPXYqQEUCMeBysNFH6uvLwfLD" \
+-d -e "UNREG_KEY=5K96vLHiz3TLV6Cw3Bn7DkPaqLXPXYqQEUCMeBysNFH6uvLwfZB" \
 -e "TESTNET_NODE_NAME=sentnlagents" \
 -e "MAINNET_NODE_NAME=sentnlagents" \
 -e "PUSHOVER=true" \
