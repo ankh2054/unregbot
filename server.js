@@ -124,7 +124,7 @@ async function checkMissedBlocks(producer, url) {
 async function checkUnregstatus(nodeName, networkType) {
    
   const mainnetUrl = 'https://missm.sentnl.io/unregging';
-  const testnetUrl =  'http://127.0.0.1:8001/unregging' //'https://misst.sentnl.io/unregging';
+  const testnetUrl =  'https://misst.sentnl.io/unregging';
   const url = networkType === 'mainnet' ? mainnetUrl : testnetUrl;
 
   try {
@@ -166,7 +166,7 @@ async function monitorProducers() {
 
     const urls = {
       mainnet: `https://missm.sentnl.io/missing-blocks?ownerName=${mainnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
-      testnet: `http://127.0.0.1:8001/missing-blocks?ownerName=${testnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+      testnet: `http://misst.sentnl.io/missing-blocks?ownerName=${testnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
     };
 
     for (const [networkType, url] of Object.entries(urls)) {
