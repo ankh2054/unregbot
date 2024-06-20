@@ -47,7 +47,6 @@ docker run --name unreg  \
 -d -e "UNREG_KEY=5K96gLHiz3QLB6Cw3Bn8DkPaqLXPXYqQEUCMeBysNFH6uvLwfLD" \
 -e "TESTNET_NODE_NAME=sentnlagents" \
 -e "MAINNET_NODE_NAME=sentnlagents" \
--e "MISSED_ROUNDS=1" \
 -e "PUSHOVER=true" \
 -e "PUSHOVER_USER=xxxxxxxxxxxxxx" \
 -e "PUSHOVER_TOKEN=xxxxxxxxxxxxx" \
@@ -60,7 +59,6 @@ unreg:latest
 |**UNREG_KEY**             |`xxxxxxxxxxxxxxxxxxxxx` | The unreg private key you created in step 1                                      |
 |**TESTNET_NODE_NAME**     |`sentnlagents`          | Name of testnet producer                                                         |
 |**MAINNET_NODE_NAME**     |`sentnlagents `         | Name of mainnet producer                                                         |
-|**MISSED_ROUNDS**         | 1                      | Amount of rounds to be missed before your producer will be uregged. Defaults to 1|
 |**PUSHOVER**              |`true` or `false`       | This enables or disables Pushover notifications. Defaults to true.               |
 |**PUSHOVER_USER=**        |`xxxxxxxxxxxxxxxxxxxxxx`| Pushover user if using notifications                                             |
 |**PUSHOVER_TOKEN**        |`xxxxxxxxxxxxxxxxxxxxxx`| Pushover token if using notifications                                            |
