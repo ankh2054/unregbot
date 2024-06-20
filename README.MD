@@ -5,7 +5,7 @@
 
 ### Overview
 
-This JavaScript tool continuously monitors your producer for missing blocks by querying the missingblocks API from Sentnl.io every minute. If missing blocks are detected, you will receive notifications, and your producer will be unregistered if blocks are missed. 
+This JavaScript tool continuously monitors your producer for missing blocks by querying the missingblocks API from Sentnl.io every minute. If your producer misses 12 blocks or more, you will receive notifications and your producer will be unregistered.
 
 
 ### Features
