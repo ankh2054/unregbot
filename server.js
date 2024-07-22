@@ -143,8 +143,8 @@ async function manageBlockProducers(networkType) {
     const resumeResponse = await fetch(resumeUrl, { method: 'GET' });
     console.log(`Resumed backup block producer on ${networkType}:`, await resumeResponse.json());
     sendPushoverNotification(
-      `Your primary producer on WAX ${networkType} has been paused and your backup BP resumed.`,
-      "Backup BP Resumed",
+      `Attempted pausing primary producer on WAX ${networkType} and resuming backup BP.`,
+      "Attempted pausing and resuming BPs",
       'cosmic',
       0
     );
@@ -224,13 +224,14 @@ async function monitorProducers() {
       console.log(`Checking producer ${nodeName} on WAX ${networkType}`);
 
       if (missedBlocks >= threshold) {
-        if (!producerUnregistered[nodeKey]) {
-          // Pause and Resume BPs
-          try {
+        // Pause and Resume BPs
+        try {
             await manageBlockProducers(networkType)
           } catch (error) {
             console.log(`Failed to pause and resume block producers on ${networkType}:`, error);
-          }
+        }
+        if (!producerUnregistered[nodeKey]) {
+   
           // Unregister Producer
           try {
             await unregisterProducer(unregKey, nodeName, networkType);
