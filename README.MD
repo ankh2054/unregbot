@@ -33,6 +33,7 @@ If you want to opt in to be send a notification when you producer has been unreg
 You will need the USER key and TOKEN assigned to your app.
 
 
+
 ## 2. Building and running the conainer 
 
 ### To Build the Docker container
@@ -50,9 +51,17 @@ docker run --name unreg  \
 -e "PUSHOVER=true" \
 -e "PUSHOVER_USER=xxxxxxxxxxxxxx" \
 -e "PUSHOVER_TOKEN=xxxxxxxxxxxxx" \
+-e "TESNET_PRIMARY_BP=172.16.0.71:8890" \
+-e "TESNET_BACKUP_BP=172.16.0.71:8891" \
+-e "MAINNET_PRIMARY_BP=172.16.0.71:8890" \
+-e "MAINNET_BACKUP_BP=172.16.0.71:8890" \
 unreg:latest
 
 ## ENV Variables
+
+### (Optional variables) Pass in the HTTP address of your Primary and Backup BPs.
+
+If you provide the HTTP addresses of your Primary and Backup Block Producers (BPs), the process will attempt to pause your Primary BP and resume your Backup BP in case of missing blocks. This won’t prevent your producer from being unregistered, but it will minimize the number of missed rounds while your producer is unregistered.
 
 |ENV & ARG                 |Value                   |Description                                                                       |
 |--------------------------|------------------------|----------------------------------------------------------------------------------|
@@ -62,6 +71,10 @@ unreg:latest
 |**PUSHOVER**              |`true` or `false`       | This enables or disables Pushover notifications. Defaults to true.               |
 |**PUSHOVER_USER=**        |`xxxxxxxxxxxxxxxxxxxxxx`| Pushover user if using notifications                                             |
 |**PUSHOVER_TOKEN**        |`xxxxxxxxxxxxxxxxxxxxxx`| Pushover token if using notifications                                            |
+|**TESNET_PRIMARY_BP**     |`xxxxxxxxxxxxxxxxxxxxxx`| Optionally specify Primary and Backup BPs                                        |
+|**TESNET_BACKUP_BP**      |`xxxxxxxxxxxxxxxxxxxxxx`| Optionally specify Primary and Backup BPs                                        |
+|**MAINNET_PRIMARY_BP**    |`xxxxxxxxxxxxxxxxxxxxxx`| Optionally specify Primary and Backup BPs                                        |
+|**MAINNET_BACKUP_BP**     |`xxxxxxxxxxxxxxxxxxxxxx`| Optionally specify Primary and Backup BPs                                        |
 
 
 

@@ -11,6 +11,7 @@ const rpcEndpoints = JSON.parse(fs.readFileSync('rpc_endpoints.json', 'utf8'));
 // Configuration
 const mainnetNodeName = process.env.MAINNET_NODE_NAME;
 const pushoverEnabled = process.env.PUSHOVER !== 'false'; // Check if Pushover is enabled
+
 // Global object to track unregistration status
 const producerUnregistered = {};
 // Initialize an object to hold the unregistration status for each network type
@@ -108,6 +109,51 @@ async function unregisterProducer(unregKey, producer, networkType) {
     throw new Error('All RPC endpoints failed');
 }
 
+
+// Function to pause and resume BP
+async function manageBlockProducers(networkType) {
+  let primaryBP, backupBP;
+
+  if (networkType === 'mainnet') {
+    primaryBP = process.env.MAINNET_PRIMARY_BP;
+    backupBP = process.env.MAINNET_BACKUP_BP;
+  } else if (networkType === 'testnet') {
+    primaryBP = process.env.TESTNET_PRIMARY_BP;
+    backupBP = process.env.TESTNET_BACKUP_BP;
+  }
+
+  if (primaryBP === 'false' || backupBP === 'false') {
+    console.log(`Skipping resuming and pausing of block producer on ${networkType} because one or more endpoints are set to 'false'.`);
+    return;
+  }
+
+  const pauseUrl = `http://${primaryBP}/v1/producer/pause`;
+  const resumeUrl = `http://${backupBP}/v1/producer/resume`;
+
+  // Attempt to pause the primary block producer
+  try {
+    const pauseResponse = await fetch(pauseUrl, { method: 'GET' });
+    console.log(`Paused primary block producer on ${networkType}:`, await pauseResponse.json());
+  } catch (error) {
+    console.log(`Error pausing primary block producer on ${networkType}:`, error);
+  }
+
+  // Attempt to resume the backup block producer
+  try {
+    const resumeResponse = await fetch(resumeUrl, { method: 'GET' });
+    console.log(`Resumed backup block producer on ${networkType}:`, await resumeResponse.json());
+    sendPushoverNotification(
+      `Your primary producer on WAX ${networkType} has been paused and your backup BP resumed.`,
+      "Backup BP Resumed",
+      'cosmic',
+      0
+    );
+  } catch (error) {
+    console.log(`Error resuming backup block producer on ${networkType}:`, error);
+  }
+}
+
+
 // Function to check for missed blocks
 async function checkMissedBlocks(producer, url) {
   try {
@@ -179,6 +225,13 @@ async function monitorProducers() {
 
       if (missedBlocks >= threshold) {
         if (!producerUnregistered[nodeKey]) {
+          // Pause and Resume BPs
+          try {
+            await manageBlockProducers(networkType)
+          } catch (error) {
+            console.log(`Failed to pause and resume block producers on ${networkType}:`, error);
+          }
+          // Unregister Producer
           try {
             await unregisterProducer(unregKey, nodeName, networkType);
             producerUnregistered[nodeKey] = true;
@@ -227,7 +280,7 @@ async function monitorProducers() {
           );
         }
         pushoverCount[networkType] = 0; // Reset pushover count for the specific network type
-        producerUnregistered[nodeKey] = false;
+        producerUnregistered[nodeKey] = false; // Set Producer unregistered to False after no longer being in schedule
         console.log(`${nodeName} on ${networkType} has missed ${missedBlocks} blocks between ${startDate.toTimeString().split(' ')[0]} - ${endDate.toTimeString().split(' ')[0]}`);
       }
     }
