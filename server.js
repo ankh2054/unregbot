@@ -2,11 +2,11 @@ import dotenv from 'dotenv';
 dotenv.config();
 import { Session } from "@wharfkit/session"
 import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey"
+import { NodePulse } from '@sentnl/nodepulse';
 import fetch from 'node-fetch';
 import schedule from 'node-schedule';
 import fs from 'fs';
 import Pushover from 'pushover-notifications';
-const rpcEndpoints = JSON.parse(fs.readFileSync('rpc_endpoints.json', 'utf8'));
 
 // Configuration
 const mainnetNodeName = process.env.MAINNET_NODE_NAME;
@@ -25,7 +25,20 @@ let isRunning = false;
 //Set pushovercont for sending pending removal message
 let pushoverCount = { mainnet: 0, testnet: 0 }; 
 
+// Initialize NodePulse for mainnet and testnet
+const mainnetNodes = new NodePulse({
+  nodeType: 'hyperion',
+  network: 'mainnet',
+  nodeCount: 3,
+  historyfull: true
+});
 
+const testnetNodes = new NodePulse({
+  nodeType: 'hyperion',
+  network: 'testnet',
+  nodeCount: 3,
+  historyfull: true
+});
 
 // Pushover loading
 const push = new Pushover({
@@ -60,14 +73,13 @@ function sleep(ms) {
 
 // Function to unregister a producer
 async function unregisterProducer(unregKey, producer, networkType) {
-    const networkInfo = rpcEndpoints[networkType];
-    const endpoints = networkInfo.endpoints;
-    const chainId = networkInfo.chainId;  // Get the chainId from the JSON file
-
+    const nodePulse = networkType === 'mainnet' ? mainnetNodes : testnetNodes;
+    const chainId = networkType === 'mainnet' ? 
+      '1064487b3cd1a897ce03ae5b6a865651747e2e152090f99c1d19d44e01aea5a4' : 
+      'f16b1833c747c43682f4386fca9cbb327929334a762755ebec17f6f23c9b8a12';
 
     const walletPlugin = new WalletPluginPrivateKey(unregKey);
 
-    // Define the action to unregister the producer
     const unregprod = {
       account: 'eosio',
       name: 'unregprod',
@@ -80,16 +92,15 @@ async function unregisterProducer(unregKey, producer, networkType) {
       },
     };
 
-    // Attempt to execute the transaction on each endpoint
-    for (const endpoint of endpoints) {
+    // Try each endpoint from NodePulse
+    while (true) {
       try {
-        // Update the chain object for each endpoint
+        const endpoint = await nodePulse.getNode();
         const chain = {
           id: chainId,
           url: endpoint
         };
 
-        // Reinitialize the session with the updated chain object
         const session = new Session({
           actor: producer,
           permission: 'unregprod',
@@ -101,12 +112,11 @@ async function unregisterProducer(unregKey, producer, networkType) {
         console.log(`Transaction successful on ${endpoint}`);
         return result;
       } catch (error) {
-        console.log(`Error unregistering producer on ${endpoint}:`, error);
-        // Continue to the next endpoint
+        console.log(`Error unregistering producer:`, error);
+        // NodePulse will automatically try the next endpoint
+        await nodePulse.refreshNodes();
       }
     }
-
-    throw new Error('All RPC endpoints failed');
 }
 
 
@@ -155,7 +165,7 @@ async function manageBlockProducers(networkType) {
 
 
 // Function to check for missed blocks
-async function checkMissedBlocks(producer, url) {
+async function checkMissedBlocks(url) {
   try {
     const response = await fetch(url);
     const data = await response.json();
@@ -205,20 +215,21 @@ async function monitorProducers() {
     //const pushoverEnabled = process.env.PUSHOVER !== 'false'; // Check if Pushover is enabled
     
     const currentDate = new Date();
-    const endDate = new Date(currentDate.getTime() - 180000); //3 minutes ago
-    const startDate = new Date(currentDate.getTime() - 240000);  //4 minutes ago
+    const endDate = new Date(currentDate.getTime() - 240000); // 4 minutes ago
+    const startDate = new Date(currentDate.getTime() - 300000); // 5 minutes ago
 
-    
 
     const urls = {
       mainnet: `https://missm.sentnl.io/missing-blocks?ownerName=${mainnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
       testnet: `http://misst.sentnl.io/missing-blocks?ownerName=${testnetNodeName}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
     };
 
+    console.log(urls);
     for (const [networkType, url] of Object.entries(urls)) {
       const nodeName = networkType === 'mainnet' ? mainnetNodeName : testnetNodeName;
       const nodeKey = `${nodeName}-${networkType}`;
-      const missedBlocks = await checkMissedBlocks(nodeName, url);
+      const missedBlocks = await checkMissedBlocks(url);
+      console.log(`Missed blocks: ${missedBlocks}`);
       const threshold = 12 * missed_rounds;
       producerUnregStatus[networkType] = await checkUnregstatus(nodeName, networkType);
       console.log(`Checking producer ${nodeName} on WAX ${networkType}`);
